@@ -38,9 +38,32 @@ SELECT apellido, salario, comision, salario + comision AS "salario total" FROM e
 SELECT apellido, salario, comision, salario * 12 + comision AS "salario anual" FROM emp;
 
 -- consultas de agrupacion
+SELECT count(*) as NUMERO_DOCTORES FROM doctor;
+SELECT count(apellido) as NUMERO_DOCTORES FROM doctor;
+SELECT count(apellido) as DOCTORES, max(salario) as MAXIMO FROM doctor; 
+
+SELECT count(*) as DOCTORES, ESPECIALIDAD FROM doctor GROUP BY ESPECIALIDAD;
+
+SELECT count(*) as PERSONAS, max(salario) as MAXIMO_SALARIO, dept_no, oficio FROM emp GROUP BY dept_no, oficio;
+
+SELECT count(*) as PERSONAS, turno from plantilla GROUP BY turno;
+
 SELECT max(salario) AS "salario maximo" FROM emp;
 SELECT max(salario) AS "salario maximo", oficio FROM emp GROUP BY oficio;
 SELECT oficio, max(salario) AS "salario maximo" FROM emp GROUP BY oficio ORDER BY "salario maximo" DESC FETCH FIRST 1 ROWS ONLY;
+
+-- Filtrar consultas de agrupacion
+SELECT count(*) as EMPLEADOS, oficio
+FROM EMP
+GROUP BY oficio
+HAVING oficio in ('ANALISTA','VENDEDOR'); 
+
+SELECT count(*) as EMPLEADOS, oficio
+FROM EMP
+WHERE oficio in ('ANALISTA','VENDEDOR')
+GROUP BY oficio;
+
+
 
 -- clausula distinct, elimina repetidos
 SELECT DISTINCT oficio FROM emp;
