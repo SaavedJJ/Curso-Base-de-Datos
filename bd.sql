@@ -48,7 +48,7 @@ SELECT count(*) as PERSONAS, max(salario) as MAXIMO_SALARIO, dept_no, oficio FRO
 
 SELECT count(*) as PERSONAS, turno from plantilla GROUP BY turno;
 
-SELECT max(salario) AS "salario maximo" FROM emp;
+SELECT max(salario) AS "salario maximo" FROM emp;                                                                          
 SELECT max(salario) AS "salario maximo", oficio FROM emp GROUP BY oficio;
 SELECT oficio, max(salario) AS "salario maximo" FROM emp GROUP BY oficio ORDER BY "salario maximo" DESC FETCH FIRST 1 ROWS ONLY;
 
@@ -63,18 +63,65 @@ FROM EMP
 WHERE oficio in ('ANALISTA','VENDEDOR')
 GROUP BY oficio;
 
-
-
 -- clausula distinct, elimina repetidos
 SELECT DISTINCT oficio FROM emp;
 SELECT COUNT(DISTINCT oficio) AS num_oficios FROM emp;
 
 
+-- Consultas de combinacion inner join
+SELECT  emp.apellido, emp.oficio, 
+        dept.dnombre, dept.loc
+FROM emp
+JOIN dept
+ON emp.dept_no = dept.dept_no;
+
+SELECT  h.*,
+        s.*,
+        p.*,
+        d.*
+FROM hospital h
+JOIN sala s
+ON h.hospital_cod = s.hospital_cod
+JOIN plantilla p
+ON h.hospital_cod = p.hospital_cod
+JOIN doctor d
+ON h.hospital_cod = d.hospital_cod;
+
+-- Consultas de combinacion left join
+SELECT e.apellido, d.dnombre, d.loc
+FROM emp e
+LEFT JOIN dept d
+ON e.dept_no = d.dept_no;
+-- Consultas de combinacion right join
+SELECT e.apellido, d.dnombre, d.loc
+FROM emp e
+RIGHT JOIN dept d
+ON e.dept_no = d.dept_no;
+-- Consultas de combinacion full join (no se utiliza)
+SELECT e.apellido, d.dnombre, d.loc
+FROM emp e
+FULL JOIN dept d
+ON e.dept_no = d.dept_no;
+-- Consultas de combinacion cross join
+SELECT e.apellido, d.dnombre, d.loc
+FROM emp e
+CROSS JOIN dept d;
 
 
+-- Mostrar la media salarial de los doctores por hospital, mostrando el nombre del hospital
+SELECT avg(d.salario) AS media, h.nombre
+FROM doctor d
+JOIN hospital h
+ON d.hospital_cod = h.hospital_cod
+GROUP BY h.nombre;
 
 
-
+-- Mostrar el numero de empleados que exiten por cada locoalidad
+SELECT count(apellido) AS EMPLEADOS, d.loc
+FROM emp e 
+RIGHT JOIN dept d 
+ON e.dept_no = d.dept_no
+GROUP BY d.loc;
 
 
 
