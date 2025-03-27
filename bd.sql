@@ -123,7 +123,37 @@ RIGHT JOIN dept d
 ON e.dept_no = d.dept_no
 GROUP BY d.loc;
 
+-- Subconsultas Visualizar los datos del empleado que mas cobra en la empresa
+SELECT max(salario) FROM emp;
+--650000
+SELECT * FROM emp
+WHERE salario = 650000;
 
+SELECT * FROM emp WHERE salario = (SELECT max(salario) FROM emp);
+
+-- Subconsultas Mostrar los empleados que tienen el mismo oficio que el empleado gil y que cobren menos que jimenez
+SELECT * 
+FROM emp 
+WHERE oficio = 
+                (SELECT oficio 
+                 FROM emp 
+                 WHERE apellido = 'gil');
+
+SELECT * 
+FROM emp 
+WHERE oficio IN
+                (SELECT oficio 
+                 FROM emp 
+                 WHERE apellido = 'gil'
+                 AND apellido = 'jimenez');
+
+-- Consultas de union 
+SELECT apellido, oficio, salario 
+FROM emp
+UNION
+SELECT apellido, funcion, salario 
+FROM plantilla
+ORDER BY 2;
 
 
 
