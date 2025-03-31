@@ -155,10 +155,96 @@ SELECT apellido, funcion, salario
 FROM plantilla
 ORDER BY 2;
 
+-- Consultas Select to Select. Recuperar datos de un Select ya realizado
+SELECT *
+FROM
+(SELECT apellido, oficio, salario 
+FROM emp e
+UNION
+SELECT apellido, funcion, salario
+FROM plantilla p
+UNION
+SELECT apellido, especialidad, salario
+FROM doctor d) CONSULTA
+WHERE CONSULTA.salario < 300000;
+
+-- Consultas a nivel de fila
+
+SELECT apellido, funcion, turno,
+ CASE turno
+  when 'T' then 'TARDE'
+  when 'M' then 'MAÑANA'
+  else 'NOCHE'
+ END AS FORMATO
+FROM plantilla;
+
+SELECT apellido, funcion, salario,
+ CASE 
+  when salario > 300000 then 'ALTO'
+  when salario > 200000 then 'MEDIO'
+  else 'BAJO'
+ END AS FORMATO
+FROM plantilla;
 
 
+-- MOSTRAR LA SUMA SALARIAL DE LOS EMPLEADOS POR SU NOMBRE DE DEPARTAMENTO
+-- MOSTRAR LA SUMA SALARIAL DE LOS DOCTORES POR SU HOSPITAL
+-- TODO JUNTO EN UNA MISMA CONSULTA
 
+SELECT *
+FROM
+        (SELECT sum(e.salario) as SALARIO_TOTAL, d.dnombre AS NOMBRE
+        FROM emp e
+        RIGHT JOIN dept d
+        ON e.dept_no = d.dept_no
+        GROUP BY d.dnombre
+        UNION
+        SELECT sum(d.salario), h.nombre
+        FROM hospital h
+        JOIN doctor d
+        ON h.hospital_cod = d.hospital_cod
+        GROUP BY h.nombre);
 
+-- Consultas de accion INSERT, UPDATE, DELETE (rollback, commit)
+-- INSERT COMPLETO
+INSERT INTO dept 
+VALUES (50, 'ORACLE', 'BERNABEU');
+rollback;
+SELECT * FROM dept;
+-- INSERT PARCIAL
+INSERT INTO dept (dept_no, dnombre) 
+VALUES (50, 'ORACLE');
+rollback;
+SELECT * FROM dept;
+-- INSERT con subconsulta
+SELECT max(dept_no) + 10 from dept;
+INSERT INTO dept VALUES ((SELECT max(dept_no) + 10 from dept), 'SIDRA', 'GIJON');
+SELECT * FROM dept;
 
+-- DELETE todos los registros de la tabla
+DELETE FROM HOSPITAL;
+rollback;
+-- DELETE condicional
+DELETE FROM dept 
+WHERE dnombre = 'ORACLE';
+rollback;
+-- DELETE con subconsulta
+DELETE FROM emp
+WHERE dept_no = (SELECT dept_no FROM dept WHERE loc = 'GRANADA');
+rollback;
+
+-- UPDATE todos los registros de la tabla
+UPDATE dept 
+SET dnombre = 'INVERSION', loc = 'PAMPLONA';
+-- UPDATE condicional 
+UPDATE plantilla
+SET salario = 315000
+WHERE turno = 'N';
+--UPDATE con operaciones matematicas
+UPDATE emp set salario = salario + '1';
+-- UPDATE con subconsulta
+UPDATE dept 
+SET dnombre = 'INVERSION'
+WHERE dept_no = (SELECT dept_no FROM dept WHERE loc = 'BERNABEU');
 
 
