@@ -73,10 +73,19 @@ WHERE oficio LIKE '%O'
 ORDER BY 3;
 
 -- 11 Visualizar los datos de los hospitales que tienen personal (Doctores) de cardiologia
+SELECT * 
+FROM hospital 
+WHERE hospital_cod IN (SELECT hospital_cod FROM doctor WHERE especialidad = 'Cardiologia');
 
 -- 12 Visualizar el apellido y el salario anual de los empleados de la plantilla del Hospital Provincial y General
+SELECT apellido, salario*12 AS salario_anual
+FROM plantilla
+WHERE hospital_cod IN (SELECT hospital_cod FROM hospital WHERE nombre IN ('provincial','general'));
 
 -- 13 Mostrar el apellido de los enfermeros que nacieron antes que el Señor Miller
+SELECT apellido
+FROM enfermo 
+WHERE fecha_nac < (SELECT fecha_nac FROM enfermo WHERE apellido = 'Miller G.');
 
 -- 14 Necesitamos un informe para evaluar como van las cuentas generales de la empresa. 
 -- Para ello, necesitamos saber lo que cobra cada persona por cada oficio de manera detallada.
