@@ -90,3 +90,16 @@ WHERE fecha_nac < (SELECT fecha_nac FROM enfermo WHERE apellido = 'Miller G.');
 -- 14 Necesitamos un informe para evaluar como van las cuentas generales de la empresa. 
 -- Para ello, necesitamos saber lo que cobra cada persona por cada oficio de manera detallada.
 -- Necesitamos el maximo salario y el minimo mas la media salarial, el total de sueldos y el numero de trabajadores que hay en cada puesto de toda la base de datos.
+
+SELECT especialidad, max(salario) AS MAXIMO, avg(salario) AS MEDIA, sum(salario) AS SUMA, min(salario) AS MINIMO, count(apellido) AS TRABAJADORES
+FROM doctor
+GROUP BY especialidad
+UNION
+SELECT funcion, max(salario), avg(salario), sum(salario), min(salario), count(apellido)
+FROM plantilla
+GROUP BY funcion
+UNION 
+SELECT oficio, max(salario), avg(salario), sum(salario), min(salario), count(apellido)
+FROM emp
+GROUP BY oficio
+ORDER BY 2;

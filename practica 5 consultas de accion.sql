@@ -74,4 +74,30 @@ VALUES ((SELECT hospital_cod FROM hospital WHERE nombre = 'la paz'),
 SELECT * FROM doctor;
 rollback;
 
--- 12 
+-- 12 Borrar todos los empleados dados de alta entre las fechas 01/01/80 y 31/12/2082
+DELETE FROM emp 
+WHERE fecha_alt BETWEEN '01/01/80' AND '31/12/2082';
+
+-- 13 Modificar el salario de los empleados que trabajen en la paz y esten destinados a Psiquiatria,
+-- subirles el salario en 200000 mas que al señor Amigo R.
+UPDATE doctor
+SET salario = (SELECT salario FROM plantilla WHERE apellido = 'amigo r.') + 20000
+WHERE hospital_cod = (SELECT hospital_cod FROM hospital WHERE nombre = 'la paz')
+AND especialidad = 'Psiquiatria';
+
+-- 14 Insertar un empleado con valores null y despues borrarlo buscando como valor dicho valor null creado
+INSERT INTO emp (apellido, salario, comision) 
+VALUES ('saavedra', NULL, 20000);
+
+DELETE emp 
+WHERE salario IS NULL;
+
+SELECT * FROM emp;
+
+-- 15 Borrar los empleados cuyo nombre de departamento sea produccion
+DELETE FROM emp
+WHERE dept_no = (SELECT dept_no FROM dept WHERE dnombre = 'PRODUCCION');
+
+-- 16 Borrar todos los registros de la tabla emp de la forma mas rapida
+TRUNCATE TABLE emp;
+ROLLBACK;
