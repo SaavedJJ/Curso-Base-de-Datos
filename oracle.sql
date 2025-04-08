@@ -298,4 +298,117 @@ SELECT * FROM user_sequences;
 
 
 
+-- DIA 10 
+-- Funciones de Oracle
+-- Desarrollo PL/SQL (CODIGO)
+
+-- Funciones conversion mayusculas y minusculas 
+SELECT * FROM emp
+WHERE lower(oficio) = 'analista';
+
+
+SELECT * FROM emp
+WHERE upper(oficio) = upper('anaLISTA');
+
+-- Concatenar textos en una sola columna (campo calculado)
+SELECT apellido || ' ' || oficio AS oficio FROM emp;
+SELECT concat(apellido, oficio) AS oficio FROM emp;
+
+-- INITCAP inicializa la primera letra de cada palabra en mayúscula
+SELECT initcap(oficio) FROM emp;
+SELECT initcap(apellido || ' ' || oficio) AS oficio FROM emp;
+
+-- SUBSTR devuelve una subcadena de un string
+SELECT substr(apellido, 1, 3) FROM emp;
+SELECT substr('FLORERO', 1, 4) AS dato FROM dual;
+
+-- mostrar empleados con apellidos que empiecen por 's'
+SELECT * 
+FROM emp
+WHERE apellido LIKE 's%';
+
+SELECT * 
+FROM emp
+WHERE substr(apellido, 1, 1) = 's';
+
+-- LENGTH devuelve la longitud de un string
+SELECT length(apellido) AS APELLIDO, apellido 
+FROM emp;
+
+SELECT apellido 
+FROM emp
+WHERE apellido LIKE '____';
+
+SELECT apellido 
+FROM emp
+WHERE length(apellido) = 4;
+
+-- INSTR devuelve la posición de un string dentro de otro
+SELECT instr('BENITO', 'NI') AS POSICION
+FROM dual;
+
+-- LPAD devuelve un string con espacios a la izquierda
+-- RPAD devuelve un string con espacios a la derecha
+SELECT lpad('123', 6) AS LPAD FROM dual;
+SELECT rpad('123', 6, '.') AS RPAD FROM dual;
+
+-- ROUND redondea un número a la unidad más cercana
+SELECT round(123.456) AS REDONDEO FROM dual; -- 123
+SELECT round(123.567) AS REDONDEO FROM dual; -- 124
+SELECT round(123.456 , 2) AS REDONDEO FROM dual; -- 123.46
+SELECT round(123.456 , 1) AS REDONDEO FROM dual; -- 123.5
+SELECT round(123.456 , -1) AS REDONDEO FROM dual; -- 120
+SELECT round(125.456 , -1) AS REDONDEO FROM dual; -- 130
+
+-- TRUNC trunca un número a la unidad más cercana
+SELECT trunc(123.456) AS TRUNC FROM dual; -- 123
+SELECT trunc(123.467, 1) AS TRUNC FROM dual; -- 123.4
+
+-- MOD devuelve el resto de una división (sirve para saber si un numero es par o impar)
+SELECT mod(10, 2) AS MOD FROM dual; -- 0 (Par)
+SELECT mod(9, 2) AS MOD FROM dual; -- 1 (impar)
+
+-- Mostrar los empleados cuyo salario sea par 
+SELECT * FROM emp
+WHERE mod(salario, 2) = 0;
+
+-- SYSDATE devuelve la fecha y hora del sistema
+SELECT sysdate FROM dual;
+SELECT sysdate + 1 FROM dual; -- Sumar un día
+SELECT sysdate + 1/24 FROM dual; -- Sumar una hora
+SELECT sysdate + 60 FROM dual; -- Sumar 60 días 
+
+-- MONTHS_BETWEEN devuelve el número de meses entre dos fechas
+SELECT months_between(sysdate, '01/01/2023') AS MESES FROM dual;
+
+-- ADD_MONTHS devuelve una fecha sumando un número de meses a otra fecha
+SELECT add_months(sysdate, 1) AS MESES FROM dual; -- Sumar un mes
+
+-- NEXT_DAY devuelve el siguiente día de la semana de una fecha
+SELECT next_day(sysdate, 'Lunes') AS LUNES FROM dual; -- ALTER SESSION SET NLS_LANGUAGE = 'ENGLISH';
+
+-- LAST_DAY devuelve el último día del mes de una fecha
+SELECT last_day(sysdate) AS ULTIMO FROM dual; -- Último día del mes actual
+
+-- TO_CHAR convierte un número o una fecha a un string
+SELECT sysdate FROM dual; -- Fecha y hora del sistema
+SELECT to_char(sysdate, 'dd/mm/yyyy') AS FECHA FROM dual; -- Fecha en formato DD/MM/YYYY
+SELECT to_char(sysdate, 'dd/mm/yyyy hh:mi:ss') AS FECHA FROM dual; -- Fecha y hora en formato DD/MM/YYYY HH24:MI:SS
+SELECT to_char(sysdate, 'j') AS FECHA FROM dual;
+
+SELECT to_char(sysdate, 'day "de" month "del" yyyy', 'nls_date_language = SPANISH') AS FECHA FROM dual; 
+
+-- formato a numeros
+SELECT to_char(123, '000L') AS NUMERO FROM dual; -- 123456789.12
+
+-- NLV devuelve el valor de una variable de entorno
+SELECT nvl(comision, 0), comision AS comision FROM emp; -- Si el primer parámetro es nulo devuelve el segundo
+SELECT apellido, salario + comision AS TOTAL FROM emp; -- Si la comision es nula no suma nada
+SELECT apellido, salario + nvl(comision, 0) AS TOTAL FROM emp; -- Si la comision es nula suma 0
+
+-- DECODE convierte un string a otro tipo de dato
+SELECT apellido, decode(turno, 'M', 'MAÑANA', 'N' , 'NOCHE', 'TARDE') AS TURNO FROM plantilla;
+
+-- Funciones anidadas
+SELECT next_day(next_day(sysdate, 'wednesday'), 'wednesday') AS CHAMPIONS FROM dual;
 
