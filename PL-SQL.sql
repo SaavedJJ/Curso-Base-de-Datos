@@ -275,3 +275,124 @@ BEGIN
     END LOOP;
     DBMS_OUTPUT.PUT_LINE(suma);
 END;
+
+
+-- CURSORES
+-- Modifcar el salario del empleado ARROYO. Si el empleado cobra mas de 250.000, le bajamos el sueldo en 10.000. Si no, le subimos el sueldo en 10.000
+
+DECLARE
+    v_salario emp.SALARIO%TYPE;
+    v_idemp emp.EMP_NO%TYPE;
+BEGIN
+    SELECT salario, emp_no INTO v_salario, v_idemp FROM emp WHERE upper(apellido) = 'ARROYO';
+        IF v_salario > 250000 THEN
+            v_salario := v_salario - 10000;
+            DBMS_OUTPUT.PUT_LINE('Salario reducido en 10.000');
+        ELSE
+            v_salario := v_salario + 10000;
+            DBMS_OUTPUT.PUT_LINE('Salario incrementado en 10.000');
+        END IF;
+    UPDATE emp
+    SET salario = v_salario
+    WHERE emp_no = v_idemp;
+END;
+
+SELECT salario FROM emp WHERE upper(apellido) = 'ARROYO';
+
+
+-- Modificar el salario de los doctores de LA PAZ
+-- Si la suma salarial supera 1.000.000 bajamos en 10.000 a todos si no, subimos 10.000
+-- mostrar el numero de filas modificadas 
+-- SOLUCION 1
+DECLARE 
+    CURSOR doctores IS 
+    SELECT salario, hospital_cod 
+    FROM doctor 
+    WHERE hospital_cod = (SELECT hospital_cod FROM hospital WHERE upper(nombre) = 'LA PAZ');
+    v_hospital_cod doctor.hospital_cod%TYPE;
+    v_salario doctor.salario%TYPE;
+    v_suma_salarial INT := 0;
+BEGIN
+    OPEN doctores;
+
+    LOOP
+        FETCH doctores INTO v_salario, v_hospital_cod;
+            v_suma_salarial := v_suma_salarial + v_salario;
+        EXIT WHEN doctores%NOTFOUND;  
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('Suma salarial: ' || v_suma_salarial);
+
+    IF v_suma_salarial > 1000000 THEN
+        UPDATE doctor
+        SET salario = salario - 10000
+        WHERE hospital_cod = v_hospital_cod;
+        DBMS_OUTPUT.PUT_LINE('Salario reducido en 10.000 a: ' || doctores%ROWCOUNT || ' doctores');
+    ELSE
+        UPDATE doctor
+        SET salario = salario + 10000
+        WHERE hospital_cod = v_hospital_cod;
+        DBMS_OUTPUT.PUT_LINE('Salario incrementado en 10.000 a: ' || doctores%ROWCOUNT || ' doctores');
+    END IF;
+
+    CLOSE doctores;
+END;
+-- SOLUCION 2
+DECLARE
+    v_suma_salarial INT := 0;
+    v_hospital_cod doctor.hospital_cod%TYPE;
+BEGIN
+    SELECT sum(salario), hospital_cod
+    INTO v_suma_salarial, v_hospital_cod
+    FROM doctor 
+    WHERE hospital_cod = (SELECT hospital_cod FROM hospital WHERE upper(nombre) = 'LA PAZ')
+    GROUP BY hospital_cod;
+    DBMS_OUTPUT.PUT_LINE('Suma salarial: ' || v_suma_salarial);
+
+    IF v_suma_salarial > 1000000 THEN
+        UPDATE doctor
+        SET salario = salario - 10000
+        WHERE hospital_cod = v_hospital_cod;
+        DBMS_OUTPUT.PUT_LINE('Salario reducido en 10.000 a ' || SQL%ROWCOUNT || ' doctores');
+    ELSE
+        UPDATE doctor
+        SET salario = salario + 10000
+        WHERE hospital_cod = v_hospital_cod;
+        DBMS_OUTPUT.PUT_LINE('Salario incrementado en 10.000 a ' || SQL%ROWCOUNT || ' doctores');
+    END IF;
+END;
+
+SELECT sum(salario) FROM doctor WHERE hospital_cod = (SELECT hospital_cod FROM hospital WHERE upper(nombre) = 'LA PAZ');
+SELECT count(apellido) FROM doctor WHERE hospital_cod = 22;
+
+desc doctor;
+
+-- Mostrar todos los datos del doctor Cajal ROWTYPE
+DECLARE 
+    v_dept dept%ROWTYPE;
+    CURSOR c_dept IS
+    SELECT * FROM DEPT;
+BEGIN
+    OPEN c_dept;
+        LOOP
+            FETCH c_dept INTO v_dept;
+            EXIT WHEN c_dept%NOTFOUND;
+            DBMS_OUTPUT.PUT_LINE('Codigo departamento: ' || v_dept.dept_no ||
+                                 ', Nombre departamento: ' || v_dept.dnombre || 
+                                 ', Localidad departamento: ' || v_dept.loc);
+        END LOOP;
+    CLOSE c_dept;
+END;
+
+desc dept;
+
+
+-- Estructura de Cursor con bucle for
+DECLARE 
+    CURSOR c_emp IS
+    SELECT apellido FROM emp;
+BEGIN
+    FOR registro IN c_emp LOOP
+        DBMS_OUTPUT.PUT_LINE(registro.apellido);
+    END LOOP;
+END;
