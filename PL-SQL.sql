@@ -396,3 +396,52 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE(registro.apellido);
     END LOOP;
 END;
+
+-- EXCEPCIONES
+-- Capturar una excepcion del sistema
+DECLARE
+    num1 NUMBER := 2;
+    num2 NUMBER := 0;
+    division NUMBER;
+BEGIN
+    division := num1 / num2;
+    DBMS_OUTPUT.PUT_LINE(division);
+EXCEPTION
+    WHEN ZERO_DIVIDE THEN
+        DBMS_OUTPUT.PUT_LINE('no se puede dividir entre 0');
+END;
+
+-- Crear una excepcion de usuario
+-- Lanzar una excepcion cuando los empleados tengan una comision igual a 0
+CREATE TABLE emp_comision (apellido VARCHAR2(50), comision NUMBER(9));
+
+SELECT comision FROM emp;
+
+DECLARE
+    CURSOR c_emp IS
+    SELECT apellido, comision 
+    FROM emp 
+    ORDER BY comision DESC;
+    comision EXCEPTION;
+BEGIN
+    FOR v_record IN c_emp LOOP
+        IF v_record.comision = 0 THEN
+            RAISE comision;
+        END IF; 
+    END LOOP;
+EXCEPTION
+    WHEN comision THEN
+     DBMS_OUTPUT.PUT_LINE('empleados con comision 0');
+END;
+
+-- PRAGMA EXCEPTION_INIT
+DECLARE
+    exception_nulos EXCEPTION;
+    PRAGMA EXCEPTION_INIT(exception_nulos, -1400);
+BEGIN
+    INSERT INTO dept VALUES (null, 'DEPARTAMENTO', 'PRAGMA');
+EXCEPTION
+    WHEN exception_nulos THEN
+        DBMS_OUTPUT.PUT_LINE('no sirven nulos');
+END;
+
