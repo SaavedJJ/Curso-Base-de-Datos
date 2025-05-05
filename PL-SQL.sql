@@ -445,3 +445,295 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('no sirven nulos');
 END;
 
+
+--EJEMPLO PROCEDIMIENTO PARA MOSTRAR UN MENSAJE
+--STORED PROCEDURE
+create or replace procedure sp_mensaje
+as
+begin
+    --MOSTRAMOS UN MENSAJE
+    dbms_output.put_line('Hoy es juernes con música!!!');
+end;
+--LLAMADA AL PROCEDIMIENTO
+begin
+    sp_mensaje;
+end;
+exec sp_mensaje;
+--CREAMOS EL PROCEDIMIENTO
+create or replace procedure sp_ejemplo_plsql
+as
+begin
+    --procedimiento con bloque pl/sql
+    declare
+        v_numero number;
+    begin 
+        v_numero := 14;
+        if v_numero > 0 then
+            dbms_output.put_line('Positivo');
+        else 
+            dbms_output.put_line('Negativo');
+        end if;
+    end;
+end;
+--LLAMADA
+begin
+    sp_ejemplo_plsql;
+end;
+--TENEMOS OTRA SINTAXIS PARA TENER VARIABLES
+--DENTRO DE UN PROCEDIMIENTO.
+--NO SE UTILIZA LA PALABRA declare
+create or replace procedure sp_ejemplo_plsql2
+AS
+    v_numero number := 14;
+begin
+    if v_numero > 0 then
+        dbms_output.put_line('Positivo');
+    else 
+        dbms_output.put_line('Negativo');
+    end if;    
+end;
+begin
+    sp_ejemplo_plsql2;
+end;
+--PROCEDIMIENTO PARA SUMAR DOS NUMEROS
+create or replace procedure sp_sumar_numeros
+(p_numero1 number, p_numero2 number)
+as
+    v_suma number;
+begin
+    v_suma := p_numero1 + p_numero2;
+    dbms_output.put_line('La suma de ' || p_numero1 
+    || ' + ' || p_numero2 || ' es igual a ' || v_suma);
+end;
+---llamada al procedimiento
+begin
+    sp_sumar_numeros(5, 6);
+end;
+--NECESITO UN PROCEDIMIENTO PARA DIVIDIR DOS NUMEROS
+--SE LLAMARA sp_dividir_numeros
+create or replace procedure sp_dividir_numeros
+(p_numero1 number, p_numero2 number)
+as
+begin
+    declare
+        v_division number;
+    begin
+        v_division := p_numero1 / p_numero2;
+        dbms_output.put_line('La división entre ' || p_numero1 
+        || ' y ' || p_numero2 || ' es igual a ' || v_division);        
+    EXCEPTION
+        when ZERO_DIVIDE then
+            dbms_output.PUT_LINE('División entre cero. PL/SQL inner');
+    end;
+exception
+    when ZERO_DIVIDE then
+        dbms_output.put_line('División entre cero PROCEDURE');
+end;
+
+
+declare 
+    v_dato number;
+begin
+    v_dato := 7/0;
+    sp_dividir_numeros(7, 0);
+EXCEPTION
+    when ZERO_DIVIDE then
+        dbms_output.put_line('División entre cero, PL/SQL outer');
+end;
+
+-- Realizar un procedimiento para insertar un nuevo departamento
+CREATE OR REPLACE PROCEDURE sp_insertdept (id dept.dept_no%TYPE, nombre dept.dnombre%TYPE, localidad dept.loc%TYPE) AS
+BEGIN 
+    INSERT INTO DEPT VALUES (id, nombre, localidad);
+END;
+
+SELECT * FROM dept;
+
+EXEC sp_insertdept(11, '11', '11');
+
+ROLLBACK;
+
+-- Insertar un nuevo departamento con el id siguiente mas alto
+CREATE OR REPLACE PROCEDURE sp_insertdeptmaxid (nombre dept.dnombre%TYPE, localidad dept.loc%TYPE) AS
+    v_max_id dept.dept_no%TYPE;
+BEGIN 
+    SELECT max(dept_no) + 1 INTO v_max_id FROM dept;
+    INSERT INTO DEPT VALUES (v_max_id, upper(nombre), upper(localidad));
+    COMMIT;
+EXCEPTION
+    WHEN no_data_found THEN 
+        ROLLBACK;
+END;
+
+EXEC SP_INSERTDEPTMAXID('i+d', 'coslada')
+
+-- Realizar un procedimiento para incrementar el salario de los empleados de un oficio
+-- Enviar como parametros el oficio y el incremento
+CREATE OR REPLACE PROCEDURE sp_incremento_salario_oficio (p_oficio emp.oficio%TYPE, p_incremento emp.salario%TYPE) AS
+    nodatafound EXCEPTION;
+BEGIN
+    UPDATE emp
+    SET salario = salario + p_incremento
+    WHERE oficio = upper(p_oficio);
+    DBMS_OUTPUT.PUT_LINE('registros afectados: ' || SQL%ROWCOUNT);
+    IF SQL%NOTFOUND THEN
+        RAISE nodatafound;
+    ELSE
+        COMMIT;
+    END IF;
+EXCEPTION
+    WHEN nodatafound THEN
+        DBMS_OUTPUT.PUT_LINE('No existe el oficio');
+        ROLLBACK;
+END;
+
+EXEC sp_incremento_salario_oficio('', 100000);
+
+SELECT oficio, salario FROM emp;
+
+-- Insertar doctores sin pedir el id
+
+CREATE OR REPLACE PROCEDURE sp_insertar_doctor (p_hospital_cod doctor.hospital_cod%TYPE, p_apellido doctor.apellido%TYPE, p_especialidad doctor.especialidad%TYPE, p_salario doctor.salario%TYPE) AS
+    v_max_id doctor.doctor_no%TYPE;
+BEGIN
+    SELECT max(doctor_no) + 1 
+    INTO v_max_id 
+    FROM doctor;
+    
+    INSERT INTO doctor
+    VALUES (p_hospital_cod, v_max_id, p_apellido, initcap(p_especialidad), p_salario);
+
+EXCEPTION
+    WHEN no_data_found THEN
+        DBMS_OUTPUT.PUT_LINE('No se encontraron datos');
+        ROLLBACK;
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Algo salio mal');
+        ROLLBACK;
+END;
+
+EXEC sp_insertar_doctor(19, 'House D.', 'Diagnostico', 1000000);
+
+CREATE OR REPLACE PROCEDURE sp_insertar_doctorV2 (p_hospital_name hospital.nombre%TYPE, p_apellido doctor.apellido%TYPE, p_especialidad doctor.especialidad%TYPE, p_salario doctor.salario%TYPE) AS
+    v_max_id doctor.doctor_no%TYPE;
+    v_hospital_cod doctor.hospital_cod%TYPE;
+BEGIN
+    SELECT max(doctor_no) + 1 
+    INTO v_max_id 
+    FROM doctor;
+
+    SELECT hospital_cod 
+    INTO v_hospital_cod 
+    FROM hospital
+    WHERE lower(nombre) = lower(p_hospital_name);
+    
+    INSERT INTO doctor
+    VALUES (v_hospital_cod, v_max_id, p_apellido, initcap(p_especialidad), p_salario);
+
+EXCEPTION
+    WHEN no_data_found THEN
+        DBMS_OUTPUT.PUT_LINE('No se encontraron datos del hospital');
+        ROLLBACK;
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Algo salio mal');
+        ROLLBACK;
+END;
+
+SELECT * FROM doctor; 
+SELECT nombre FROM hospital;
+
+EXEC sp_insertar_doctorV2('genera', 'Wilson', 'oncologia', 1000000);
+
+-- Realizar un procedimiento para mostrar los empleados de un departamento
+CREATE OR REPLACE PROCEDURE sp_empleados_dept(p_dept_cod dept.dept_no%TYPE) AS
+    CURSOR c_emp IS
+    SELECT apellido, dept_no 
+    FROM emp
+    WHERE dept_no = p_dept_cod;
+BEGIN
+    FOR registro IN c_emp LOOP
+        DBMS_OUTPUT.PUT_LINE('Apellido: ' || registro.apellido || ' , Departamento: ' || registro.dept_no);
+    END LOOP;
+END;
+
+EXEC sp_empleados_dept(1);
+
+desc emp;
+
+-- Procedimiento con parametros opcionales
+CREATE OR REPLACE PROCEDURE Ejemplo(p_uno int, p_dos int := 0, p_tres int := 0) AS 
+BEGIN
+     DBMS_OUTPUT.PUT_LINE(p_uno || p_dos || p_tres);
+END;
+
+EXEC Ejemplo(1, 1);
+
+CREATE OR REPLACE PROCEDURE Ejemplo2(p_uno int, p_dos int := 0, p_tres int) AS 
+BEGIN
+     DBMS_OUTPUT.PUT_LINE(p_uno || p_dos || p_tres);
+END;
+
+EXEC Ejemplo2(1, p_tres => 2);
+
+-- FUNCIONES
+CREATE OR REPLACE FUNCTION f_sumar_numeros(p_numero1 NUMBER, p_numero2 NUMBER)
+RETURN NUMBER
+AS 
+    v_suma NUMBER;
+BEGIN
+    v_suma := p_numero1 + p_numero2;
+    RETURN v_suma;
+END;
+
+SELECT f_sumar_numeros(5, 6) FROM dual;
+
+
+
+SELECT f_suma_salarial('general') FROM dual;
+
+-- Ejemplo 1
+CREATE OR REPLACE FUNCTION f_mayor(p_numero1 INT, p_numero2 INT)
+RETURN INT
+AS
+BEGIN
+    IF p_numero1 > p_numero2 THEN
+    RETURN p_numero1;
+    ELSE
+    RETURN p_numero2;
+    END IF;
+END;
+
+SELECT f_mayor(5, 5) FROM dual;
+
+-- Ejemplo 2
+CREATE OR REPLACE FUNCTION f_mayorV2(p_numero1 INT, p_numero2 INT, p_numero3 INT)
+RETURN INT
+AS
+BEGIN
+    RETURN GREATEST(p_numero1, p_numero2, p_numero3);
+END;
+
+SELECT f_mayorV2(5, 9, 7) FROM dual;
+
+-- Ejemplo 3
+CREATE OR REPLACE FUNCTION f_suma_salarial(p_hospital hospital.nombre%TYPE)
+RETURN doctor.salario%TYPE
+AS
+    v_suma NUMBER;
+BEGIN
+    SELECT sum(d.salario) + sum(p.salario) INTO v_suma  
+    FROM doctor d
+    JOIN hospital h
+    ON h.hospital_cod = d.hospital_cod
+    JOIN plantilla p
+    ON p.hospital_cod = d.hospital_cod
+    WHERE lower(h.nombre) = lower(p_hospital);
+    RETURN v_suma;
+END;
+
+-- VISTAS
+CREATE OR REPLACE VIEW V_EMPLEADOS
+AS
+SELECT emp_no, apellido, oficio, fecha_alt, dept_no FROM emp;
+
+SELECT * FROM v_empleados;
