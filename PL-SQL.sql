@@ -737,3 +737,260 @@ AS
 SELECT emp_no, apellido, oficio, fecha_alt, dept_no FROM emp;
 
 SELECT * FROM v_empleados;
+
+-- PAQUETES 
+CREATE OR REPLACE PACKAGE pk_ejemplo
+AS
+    PROCEDURE mostrarmensaje;
+END pk_ejemplo;
+
+CREATE OR REPLACE PACKAGE BODY pk_ejemplo
+AS
+
+    PROCEDURE mostrarmensaje
+    AS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('soy un paquete');
+    END;
+
+END pk_ejemplo;
+
+EXEC pk_ejemplo.mostrarmensaje;
+
+CREATE OR REPLACE PACKAGE pk_delete
+AS 
+    PROCEDURE eliminar_emp(p_emp_no emp.emp_no%TYPE);
+    PROCEDURE eliminar_dept(p_dept_no dept.dept_no%TYPE);
+    PROCEDURE eliminar_doctor(p_doctor_no doctor.doctor_no%TYPE);
+    PROCEDURE eliminar_enfermo(p_inscripcion enfermo.inscripcion%TYPE);
+END pk_delete;
+
+CREATE OR REPLACE PACKAGE BODY pk_delete
+AS 
+    PROCEDURE eliminar_emp(p_emp_no emp.emp_no%TYPE)
+    AS
+    BEGIN
+        DELETE FROM emp WHERE emp_no = p_emp_no;
+        COMMIT;
+    END;
+    
+    PROCEDURE eliminar_dept(p_dept_no dept.dept_no%TYPE)
+    AS
+    BEGIN
+        DELETE FROM dept WHERE dept_no = p_dept_no;
+        COMMIT;
+    END;
+
+    PROCEDURE eliminar_doctor(p_doctor_no doctor.doctor_no%TYPE)
+    AS
+    BEGIN
+        DELETE FROM doctor WHERE doctor_no = p_doctor_no;
+        COMMIT;
+    END;
+
+    PROCEDURE eliminar_enfermo(p_inscripcion enfermo.inscripcion%TYPE)
+    AS
+    BEGIN
+        DELETE FROM enfermo WHERE inscripcion = p_inscripcion;
+        COMMIT;
+    END;
+
+END pk_delete;
+
+
+
+CREATE OR REPLACE PACKAGE pk_emp_salary
+AS
+    FUNCTION minimo RETURN NUMBER;
+    FUNCTION maximo RETURN NUMBER;
+    FUNCTION diferencia RETURN NUMBER;
+END pk_emp_salary;
+
+CREATE OR REPLACE PACKAGE BODY pk_emp_salary
+AS
+    FUNCTION minimo RETURN NUMBER
+    AS
+        v_minimo NUMBER;
+    BEGIN
+        SELECT min(salario) INTO v_minimo FROM emp;
+        RETURN v_minimo;
+    END;
+
+    FUNCTION maximo RETURN NUMBER
+    AS
+        v_maximo NUMBER;
+    BEGIN
+        SELECT max(salario) INTO v_maximo FROM emp;
+        RETURN v_maximo;
+    END;
+    
+    FUNCTION diferencia RETURN NUMBER
+    AS
+        v_diferencia NUMBER := maximo - minimo;
+    BEGIN
+        RETURN v_diferencia;
+    END;
+
+END pk_emp_salary;
+
+SELECT pk_emp_salary.minimo AS minimo,
+       pk_emp_salary.maximo AS maximo,
+       pk_emp_salary.diferencia AS diferencia
+FROM dual;
+
+CREATE OR REPLACE PACKAGE pk_idu_dept
+AS
+    PROCEDURE insertDept (p_dept_no dept.dept_no%TYPE, p_dept_name dept.dnombre%TYPE, p_dept_loc dept.loc%TYPE);
+    PROCEDURE deleteDept (p_dept_no dept.dept_no%TYPE);
+    PROCEDURE updateDept (p_dept_no dept.dept_no%TYPE, p_dept_name dept.dnombre%TYPE, p_dept_loc dept.loc%TYPE);
+END pk_idu_dept;
+
+CREATE OR REPLACE PACKAGE BODY pk_idu_dept
+AS
+    PROCEDURE insertDept (p_dept_no dept.dept_no%TYPE, p_dept_name dept.dnombre%TYPE, p_dept_loc dept.loc%TYPE)
+    AS
+    BEGIN
+        INSERT INTO dept VALUES (p_dept_no, upper(p_dept_name), upper(p_dept_loc));
+        COMMIT;
+    END;
+
+    PROCEDURE deleteDept (p_dept_no dept.dept_no%TYPE)
+    AS
+    BEGIN
+        DELETE FROM dept WHERE dept_no = p_dept_no;
+        COMMIT; 
+    END;
+
+    PROCEDURE updateDept (p_dept_no dept.dept_no%TYPE, p_dept_name dept.dnombre%TYPE, p_dept_loc dept.loc%TYPE)
+    AS
+    BEGIN
+        UPDATE dept
+        SET dnombre = upper(p_dept_name),
+            loc = upper(p_dept_loc)
+        WHERE dept_no = p_dept_no;
+    END;
+
+END pk_idu_dept;
+
+EXEC pk_idu_dept.INSERTDEPT(60, 'I+D', 'mallorca');
+
+EXEC pk_idu_dept.DELETEDEPT(60);
+
+EXEC pk_idu_dept.UPDATEDEPT(60, 'inves', 'cuba');
+SELECT * FROM dept;
+
+-- Practica 
+CREATE OR REPLACE VIEW v_emp
+AS
+    SELECT e.apellido AS nombre, e.oficio AS trabajo, e.salario AS salario, d.dnombre AS ubicacion
+    FROM emp e 
+    JOIN dept d
+    ON e.dept_no = d.dept_no
+    UNION
+    SELECT d.apellido, d.especialidad, d.salario, h.nombre
+    FROM doctor d
+    JOIN hospital h 
+    ON d.hospital_cod = h.hospital_cod
+    UNION
+    SELECT p.apellido, p.funcion, p.salario, h.nombre
+    FROM plantilla p
+    JOIN hospital h
+    ON p.hospital_cod = h.hospital_cod;
+
+CREATE OR REPLACE PACKAGE pk_emp
+AS
+    PROCEDURE all_emp;
+    PROCEDURE all_emp_salary(p_salario emp.salario%TYPE);
+END pk_emp;
+
+CREATE OR REPLACE PACKAGE BODY pk_emp
+AS
+    PROCEDURE all_emp
+    AS
+        CURSOR c_emp IS
+        SELECT * 
+        FROM v_emp;
+    BEGIN
+        FOR trabajador IN c_emp LOOP
+            DBMS_OUTPUT.PUT_LINE(' Nombre: ' || trabajador.nombre  ||
+                                 ' Trabajo: '|| trabajador.trabajo ||
+                                 ' Salario: '|| trabajador.salario ||
+                                 ' Puesto: ' || trabajador.ubicacion); 
+        END LOOP; 
+    END;
+
+    PROCEDURE all_emp_salary(p_salario emp.salario%TYPE)
+    AS
+        CURSOR c_emp IS
+        SELECT * 
+        FROM v_emp
+        WHERE salario > p_salario; 
+    BEGIN
+        FOR trabajador IN c_emp LOOP
+            DBMS_OUTPUT.PUT_LINE(' Nombre: ' || trabajador.nombre  ||
+                                 ' Trabajo: '|| trabajador.trabajo ||
+                                 ' Salario: '|| trabajador.salario ||
+                                 ' Puesto: ' || trabajador.ubicacion);
+        END LOOP; 
+    END;
+END pk_emp;
+
+EXEC pk_emp.all_emp;
+EXEC pk_emp.all_emp_salary(400000);
+
+-- Practica
+CREATE OR REPLACE PACKAGE pk_incremento_random
+AS 
+    FUNCTION salary_random (p_doctor_no doctor.doctor_no%TYPE) RETURN doctor.salario%TYPE;
+    PROCEDURE incremento_random;
+END pk_incremento_random;
+ 
+CREATE OR REPLACE PACKAGE BODY pk_incremento_random
+AS 
+    FUNCTION salary_random (p_doctor_no doctor.doctor_no%TYPE) 
+    RETURN doctor.salario%TYPE
+    AS
+        v_salario doctor.salario%TYPE;
+        v_incremento doctor.salario%TYPE;
+    BEGIN
+        SELECT salario INTO v_salario 
+        FROM doctor
+        WHERE doctor_no = p_doctor_no;
+
+        IF v_salario < 200000 THEN
+            v_incremento := trunc(dbms_random.value(1, 500));
+        
+        ELSIF v_salario BETWEEN 200000 AND 300000 THEN
+            v_incremento := trunc(dbms_random.value(1, 300));
+        
+        ELSE 
+            v_incremento := trunc(dbms_random.value(1, 50));
+        END IF;
+
+        RETURN v_incremento;
+    END;
+    
+    PROCEDURE incremento_random
+    AS
+        CURSOR c_doctor IS
+        SELECT * 
+        FROM doctor;
+        v_doctor c_doctor%ROWTYPE;
+    BEGIN
+        OPEN c_doctor;
+        LOOP
+            FETCH c_doctor INTO v_doctor;
+            EXIT WHEN c_doctor%NOTFOUND;
+            UPDATE doctor
+            SET salario = salario + salary_random(v_doctor.doctor_no)
+            WHERE doctor_no = v_doctor.doctor_no;
+            COMMIT;
+        END LOOP;
+        CLOSE c_doctor;
+    END;
+
+END pk_incremento_random;
+
+EXEC pk_incremento_random.incremento_random;
+
+SELECT * FROM doctor;
