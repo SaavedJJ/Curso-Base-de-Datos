@@ -959,12 +959,13 @@ AS
 
         IF v_salario < 200000 THEN
             v_incremento := trunc(dbms_random.value(1, 500));
-        
+            DBMS_OUTPUT.PUT_LINE('Salario menor a 200.000, incremento random: ' || v_incremento);
         ELSIF v_salario BETWEEN 200000 AND 300000 THEN
             v_incremento := trunc(dbms_random.value(1, 300));
-        
+            DBMS_OUTPUT.PUT_LINE('Salario entre 200.000 y 300.000, incremento random: ' || v_incremento);
         ELSE 
             v_incremento := trunc(dbms_random.value(1, 50));
+            DBMS_OUTPUT.PUT_LINE('Salario mayor a 300.000, incremento random: ' || v_incremento);
         END IF;
 
         RETURN v_incremento;
@@ -976,17 +977,16 @@ AS
         SELECT * 
         FROM doctor;
         v_doctor c_doctor%ROWTYPE;
+        v_incremento doctor.salario%TYPE;
     BEGIN
-        OPEN c_doctor;
-        LOOP
-            FETCH c_doctor INTO v_doctor;
-            EXIT WHEN c_doctor%NOTFOUND;
-            UPDATE doctor
-            SET salario = salario + salary_random(v_doctor.doctor_no)
-            WHERE doctor_no = v_doctor.doctor_no;
-            COMMIT;
+        FOR doctores IN c_doctor LOOP
+        SELECT salary_random(doctores.doctor_no) INTO v_incremento FROM dual;
+        DBMS_OUTPUT.PUT_LINE(v_incremento);
+        UPDATE doctor
+        SET salario = salario + v_incremento
+        WHERE doctor_no = doctores.doctor_no;
+        COMMIT;
         END LOOP;
-        CLOSE c_doctor;
     END;
 
 END pk_incremento_random;
@@ -994,3 +994,51 @@ END pk_incremento_random;
 EXEC pk_incremento_random.incremento_random;
 
 SELECT * FROM doctor;
+
+-- REGISTROS
+DECLARE
+    TYPE R_DEPT IS RECORD (
+        v_dept_no NUMBER, 
+        v_dnombre VARCHAR2(50), 
+        v_loc VARCHAR2(50)
+    );
+
+    v_dept R_DEPT;
+
+BEGIN
+    SELECT dept_no, dnombre, loc INTO v_dept.v_dept_no, v_dept.v_dnombre, v_dept.v_loc FROM dept WHERE dept_no = 10;
+    DBMS_OUTPUT.PUT_LINE(v_dept.v_dept_no || ' ' || v_dept.v_dnombre || ' ' || v_dept.v_loc);
+END;
+
+desc dept;
+
+-- ARRAY
+DECLARE
+    TYPE LIST_NUM IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+    v_numeros LIST_NUM;
+BEGIN
+
+    v_numeros(1) := 88;
+    v_numeros(2) := 99;
+    v_numeros(3) := 222;
+    
+    FOR i IN 1..v_numeros.count LOOP
+        DBMS_OUTPUT.PUT_LINE(v_numeros(i));
+    END LOOP;
+
+END;
+
+
+DECLARE
+    TYPE LIST_DEPT IS TABLE OF dept%ROWTYPE INDEX BY BINARY_INTEGER;
+    v_depts LIST_DEPT;
+BEGIN
+    SELECT * INTO v_depts(1) FROM dept WHERE dept_no = 10;
+    SELECT * INTO v_depts(2) FROM dept WHERE dept_no = 30;
+
+    FOR i IN 1..v_depts.count LOOP
+        DBMS_OUTPUT.PUT_LINE(v_depts(i).dnombre || ', ' || v_depts(i).loc);
+    END LOOP;
+END;
+    
+-- TRIGGERS
