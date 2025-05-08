@@ -1041,4 +1041,149 @@ BEGIN
     END LOOP;
 END;
     
--- TRIGGERS
+-- TRIGGERS BEFORE AND AFTER
+-- Ejemplo
+
+CREATE OR REPLACE TRIGGER tr_update_referencial
+BEFORE UPDATE
+ON dept
+FOR EACH ROW
+    WHEN (new.dept_no <> old.dept_no)
+DECLARE
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Cambiando empleados de departamento');
+    UPDATE emp 
+    SET dept_no = :new.dept_no
+    WHERE dept_no = :old.dept_no; 
+END;
+
+UPDATE dept
+SET dept_no = 31
+WHERE dept_no = 30;
+
+ROLLBACK;
+DROP TRIGGER tr_update_referencial;
+SELECT * FROM emp;
+
+-- Ejemplo
+CREATE OR REPLACE TRIGGER tr_presi_insert
+BEFORE INSERT
+ON emp
+FOR EACH ROW
+    WHEN (upper(new.oficio) = 'PRESIDENTE')
+DECLARE
+    v_presis INT;
+BEGIN
+    SELECT count(emp_no) INTO v_presis 
+    FROM emp
+    WHERE upper(oficio) = 'PRESIDENTE';
+    IF (v_presis > 0) THEN
+         RAISE_APPLICATION_ERROR(-20001, 'Ya existe un presidente, no se puede insertar uno nuevo');
+    END IF;
+END;
+
+INSERT INTO emp (apellido, oficio, salario) 
+VALUES ('jose', 'presidente', 100000);
+
+DROP TRIGGER tr_presi_insert;
+desc emp;
+
+-- Ejemplo
+CREATE OR REPLACE TRIGGER tr_delete_presi
+BEFORE DELETE
+ON emp
+FOR EACH ROW
+    WHEN (upper(old.oficio) = 'PRESIDENTE')
+DECLARE
+BEGIN
+    RAISE_APPLICATION_ERROR(-20001, 'No se puede borrar al presidente');
+END;
+
+DELETE emp
+WHERE upper(oficio) = 'PRESIDENTE';
+
+DROP TRIGGER tr_delete_presi;
+
+-- Ejemplo 
+CREATE OR REPLACE PACKAGE pk_triggers
+AS
+    localidad dept.loc%TYPE;
+END pk_triggers;
+
+CREATE OR REPLACE TRIGGER tr_localidades_before
+BEFORE UPDATE 
+ON dept
+FOR EACH ROW
+DECLARE
+BEGIN
+    pk_triggers.localidad := :new.loc;
+END;
+
+CREATE OR REPLACE TRIGGER tr_localidades_after
+AFTER UPDATE
+ON dept
+DECLARE
+    v_locs INT;
+BEGIN
+    SELECT count(loc) INTO v_locs 
+    FROM dept
+    WHERE upper(loc) = upper(pk_triggers.localidad);
+    IF v_locs > 0 THEN 
+        RAISE_APPLICATION_ERROR(-20001, 'Existe mas de una localidad');
+    END IF; 
+END;
+
+
+-- TRIGGERS INSTEAD OF
+CREATE OR REPLACE VIEW view_dept
+AS
+    SELECT * FROM dept;
+
+INSERT INTO view_dept
+VALUES (90, 'INFORMATICA', 'TERUEL');
+
+CREATE OR REPLACE TRIGGER tr_view_dept
+INSTEAD OF INSERT
+ON view_dept
+DECLARE
+BEGIN
+    -- INSERT INTO dept
+    -- VALUES (:new.dept_no, :new.dnombre, :new.loc);
+    DBMS_OUTPUT.PUT_LINE('Insertando en DEPT');
+END;
+
+ROLLBACK;
+DROP TRIGGER tr_view_dept;
+SELECT * FROM view_dept;
+
+
+-- Ejemplo
+CREATE OR REPLACE VIEW view_doctores
+AS
+SELECT d.doctor_no, d.apellido, d.especialidad, d.salario, h.nombre
+FROM doctor d
+JOIN hospital h
+ON d.hospital_cod = h.hospital_cod;
+
+CREATE OR REPLACE TRIGGER tr_view_doctor
+INSTEAD OF INSERT
+ON view_doctores
+DECLARE
+    v_hospital_cod doctor.hospital_cod%TYPE;
+BEGIN
+    SELECT hospital_cod INTO v_hospital_cod
+    FROM hospital
+    WHERE lower(nombre) = lower(:new.nombre);
+
+    INSERT INTO doctor
+    VALUES (v_hospital_cod, :new.doctor_no, :new.apellido, :new.especialidad, :new.salario);
+END;
+
+INSERT INTO view_doctores
+VALUES (111, 'House 2', 'Especialista', 450000, 'provincial');
+
+SELECT * FROM doctor;
+SELECT * FROM view_doctres;
+ROLLBACK;
+
+-- SQL Dinamico
