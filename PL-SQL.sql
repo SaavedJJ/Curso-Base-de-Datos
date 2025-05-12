@@ -1182,8 +1182,8 @@ END;
 INSERT INTO view_doctores
 VALUES (111, 'House 2', 'Especialista', 450000, 'provincial');
 
-SELECT * FROM doctor;
 SELECT * FROM view_doctres;
+SELECT * FROM doctor;
 ROLLBACK;
 
 -- SQL Dinamico
